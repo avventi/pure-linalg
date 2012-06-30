@@ -175,7 +175,7 @@ sum (tmp y::dmatrix,A::dmatrix * x::dmatrix) = y
         nA, mA = dim A;
         nx, mx = dim x;
         ny, my = dim y;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix) = y
     if mx == 1 && my == 1 && nx == ny && nA == nx
@@ -183,7 +183,7 @@ sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix) = y
         nA, mA = dim A;
         nx, mx = dim x;
         ny, my = dim y;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 
 sum (tmp y::dmatrix,A::dmatrix * x::dmatrix,rest) = sum (tmp y,rest)
@@ -192,7 +192,7 @@ sum (tmp y::dmatrix,A::dmatrix * x::dmatrix,rest) = sum (tmp y,rest)
         nA, mA = dim A;
         nx, mx = dim x;
         ny, my = dim y;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp y,rest)
     if mx == 1 && my == 1 && nx == ny && nA == nx
@@ -200,7 +200,7 @@ sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp y,rest)
         nA, mA = dim A;
         nx, mx = dim x;
         ny, my = dim y;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 
 /* vector-vector-matrix */
@@ -238,7 +238,7 @@ sum (y::dmatrix,A::dmatrix * x::dmatrix) = out
         nx, mx = dim x;
         ny, my = dim y;
         out = pack y;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
 sum (y::dmatrix,A::dmatrix^' * x::dmatrix) = out
     if mx == 1 && my == 1 && nx == ny && nA == nx
@@ -247,7 +247,7 @@ sum (y::dmatrix,A::dmatrix^' * x::dmatrix) = out
         nx, mx = dim x;
         ny, my = dim y;
         out = pack y;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
 
 sum (y::dmatrix,A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
@@ -257,7 +257,7 @@ sum (y::dmatrix,A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
         nx, mx = dim x;
         ny, my = dim y;
         out = pack y;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
 sum (y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
     if mx == 1 && my == 1 && nx == ny && nA == nx
@@ -266,7 +266,7 @@ sum (y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
         nx, mx = dim x;
         ny, my = dim y;
         out = pack y;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
 
 /* vector-vector-matrix */
@@ -300,7 +300,7 @@ sum (A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
         nA, mA = dim A;
         nx, mx = dim x;
         out = double_matrix (nA,1) NULL;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
 sum (A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
     if mx == 1 && nA == nx
@@ -309,7 +309,7 @@ sum (A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
         nx, mx = dim x;
         ny, my = dim y;
         out = double_matrix (mA,1) NULL;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
 
 /* vector-matrix */
@@ -337,7 +337,7 @@ A::dmatrix ::* x::dmatrix = y
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (nA,1) NULL;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 A::dmatrix^' ::* x::dmatrix = y
     if mx == 1 && nA == nx
@@ -345,7 +345,7 @@ A::dmatrix^' ::* x::dmatrix = y
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (mA,1) NULL;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 
 // vector-matrix outer multiplication
@@ -355,7 +355,7 @@ x::dmatrix ::* A::dmatrix = y
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (1,mA) NULL;
-        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 x::dmatrix ::* A::dmatrix^' = y
     if nx == 1 && mA == mx
@@ -363,7 +363,7 @@ x::dmatrix ::* A::dmatrix^' = y
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (1,nA) NULL;
-        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
 
 // matrix-matrix outer multiplication
@@ -373,7 +373,7 @@ A::dmatrix ::* B::dmatrix = C
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (nA,mB) NULL;
-        _ = cblas_dgemm CblasColMajor CblasNoTrans CblasNoTrans nA mB mA 1.0 A nA B nB 1.0 C nA;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans nA mB mA 1.0 A nA B nB 1.0 C nA;
     end;
 A::dmatrix^' ::* B::dmatrix = C
     if nA == nB
@@ -381,7 +381,7 @@ A::dmatrix^' ::* B::dmatrix = C
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (mA,mB) NULL;
-        _ = cblas_dgemm CblasColMajor CblasTrans CblasNoTrans mA mB nA 1.0 A nA B nB 1.0 C nA;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans mA mB nA 1.0 A nA B nB 1.0 C nA;
     end;
 A::dmatrix ::* B::dmatrix^' = C
     if mA == mB
@@ -389,7 +389,7 @@ A::dmatrix ::* B::dmatrix^' = C
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (nA,nB) NULL;
-        _ = cblas_dgemm CblasColMajor CblasNoTrans CblasTrans nA nB mA 1.0 A nA B nB 1.0 C nA;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans nA nB mA 1.0 A nA B nB 1.0 C nA;
     end; 
 A::dmatrix^' ::* B::dmatrix^' = C
     if nA == mB
@@ -397,7 +397,7 @@ A::dmatrix^' ::* B::dmatrix^' = C
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (mA,nB) NULL;
-        _ = cblas_dgemm CblasColMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
     end;
 
 // catch all error
