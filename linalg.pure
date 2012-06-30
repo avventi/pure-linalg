@@ -1,0 +1,409 @@
+/*  Copyright (c) 2012 by Enrico Avventi, <eavventi yahoo it>
+
+    This file is part of pure-linalg.
+
+    pure-linalg is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    pure-linalg is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with pure-linalg.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
+using namespace __cblas, __linalg;
+
+public conj;
+
+
+/**********************************************************
+****            preliminary definitions                ****
+**********************************************************/
+
+
+/* transpose and adjoint operators */
+postfix (^) ^' ^*;
+
+dim (A::matrix^') |
+dim (A::matrix^*) = m,n when n,m = dim A; end;
+
+// indexing
+A::matrix^'!(i,j) = A!(j,i);
+A::matrix^*!(i,j) = conj A!(j,i);
+
+// slicing
+A::matrix^'!!(is,js) = (A!!(js,is))^';
+A::matrix^*!!(is,js) = (A!!(js,is))^*;
+
+// these operations do not require data movement so can resolved automatically
+(A::matrix^')^' = A;
+v::matrix^' = rowvector v if colvectorp v;
+v::matrix^' = colvector v if rowvectorp v;
+
+(A::matrix^*)^* = A;
+A::dmatrix^* = A^';
+A::imatrix^* = A^'; // integer matrices are not supported by blas
+
+// pack will force the evaluation
+pack (A::matrix^') = transpose A;
+pack (A::matrix^*) = transpose $ conj A; // FIX ME: this needs to be done in one go
+
+
+/**********************************************************
+****                  blas wrappers                    ****
+**********************************************************/
+
+namespace __cblas;
+using "lib:libblas";
+
+// getting various enums values for controlling blas routines
+using "lib:cblas_enums";
+
+// row or colum major enums
+private extern void* row_major();
+private extern void* col_major();
+
+const CblasRowMajor = row_major;
+const CblasColMajor = col_major;
+
+// transpose and adjoint enums
+private extern void* no_trans();
+private extern void* trans();
+private extern void* conj_trans();
+
+const CblasNoTrans = no_trans;
+const CblasTrans = trans;
+const CblasConjTrans = conj_trans;
+
+/* dgemv */
+extern void cblas_dgemv(void* order, void* transA, int M, int N, double alpha,
+    double* A, int lda, double* x, int incx, double beta, double* y, int incy);
+
+/* dgemm */
+extern void cblas_dgemm(void* order, void* transA, void* transB, int M, int N, 
+    int K, double alpha, double* A, int lda, double* B, int ldb, double beta, 
+    double* C, int ldc);
+namespace;
+
+
+/**********************************************************
+****              algebraic formulas                   ****
+**********************************************************/
+
+
+// this namespace is for keeping the internal symbols private
+namespace __linalg; 
+
+private infix (::*) *;
+private mul;    // outer multiplication chain
+private in_mul; // inner multiplication chain
+private sum;
+private tmp;    // function that wraps temporary results
+
+/* preprocessing of algebraic expressions */
+
+// substitute multiplication chains with the private function __linalg::mul
+def (a ::* b) ::* c   |
+    a ::*(b ::* c) = mul (a,b,c);
+def mul l ::* a = mul (l,a);
+
+
+/* substitute addition chains containing multiplications terms with
+ the private function __linalg::sum
+
+whenever a term in the summation is a simple multiplication - i.e
+not a chain - the multiplication symbol ::* is replaced with the 
+private symbol __linalg::*
+
+whenever a term in the summation is a chain of multiplications the
+private function __linalg::in_mul is used instead of __linalg::mul
+
+all terms containing no multiplication are moved at the head of the 
+tuple. */
+
+def sum l ::+ a ::* b = sum(l,a * b);
+def sum l1 ::+ mul l2 = sum(l1,in_mul l2);
+def sum l ::+ a = sum (a,l);
+
+def a ::* b ::+ c ::* d = sum (a * b,c * d);
+def mul l ::+ a ::* b |
+    a ::* b ::+ mul l = sum(a * b,in_mul l);
+def mul l1 ::+ mul l2 = sum(in_mul l1,in_mul l2);
+
+def a ::* b ::+ c |
+    c ::+ a ::* b = sum (c,a * b);
+def mul l ::+ c |
+    c ::+ mul l = sum (c,in_mul l);
+
+def sum (a+b,rest) = sum(a,b,rest);
+
+
+/* resolving multiplication chains first 
+
+outer chains resolve completely into a matrix while inner chains
+resolve to a single multiplication denoted by __linalg::* in order to
+be further optimized. 
+
+the associativity property is used to reduce the number of flops.
+this optimization is performed locally, considering three terms 
+at a time, and is thus suboptimal.*/
+
+/*mul (a::var,b::var,c::var,rest) = mul (ab,c,rest);
+mul (a::var,b::var,c::var) = ab ::* c;
+in_mul (a::var,b::var,c::var,rest) = in_mul (ab,c,rest);
+in_mul (a::var,b::var,c::var) = ab * c; */
+
+
+/* highest priority rules resolving a sum and a multiplication in 
+the form
+
+    C + A*B
+
+these take advantage of temporary matrices flagged by __linalg::tmp, 
+modifing them in place.*/
+
+/* vector-matrix-vector */
+
+sum (tmp y::dmatrix,A::dmatrix * x::dmatrix) = y
+    if mx == 1 && my == 1 && nx == ny && mA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix) = y
+    if mx == 1 && my == 1 && nx == ny && nA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+
+sum (tmp y::dmatrix,A::dmatrix * x::dmatrix,rest) = sum (tmp y,rest)
+    if mx == 1 && my == 1 && nx == ny && mA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp y,rest)
+    if mx == 1 && my == 1 && nx == ny && nA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+
+/* vector-vector-matrix */
+
+/* matrix-matrix-matrix */
+
+// TO DO
+
+/* wrong dimensions */
+sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix)        |
+sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix)        |
+sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix^')      |
+sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix^')      |
+sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix,rest)   |
+sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix,rest)   |
+sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix^',rest) |
+sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
+
+/* catch all rules that resolve into ::* and ::+ */
+
+// TO DO
+
+
+/* medium priority rules resolving a sum and a multiplication.
+
+these combine multiplication and addition without modifing existing matrices,
+the result is stored in a newly allocated matrix.*/
+
+/* vector-matrix-vector */
+
+sum (y::dmatrix,A::dmatrix * x::dmatrix) = out
+    if mx == 1 && my == 1 && nx == ny && mA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        out = pack y;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
+    end;
+sum (y::dmatrix,A::dmatrix^' * x::dmatrix) = out
+    if mx == 1 && my == 1 && nx == ny && nA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        out = pack y;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
+    end;
+
+sum (y::dmatrix,A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
+    if mx == 1 && my == 1 && nx == ny && mA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        out = pack y;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
+    end;
+sum (y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
+    if mx == 1 && my == 1 && nx == ny && nA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        out = pack y;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
+    end;
+
+/* vector-vector-matrix */
+
+/* matrix-matrix-matrix */
+
+// TO DO
+
+/* wrong dimesnions */
+sum (C::dmatrix,A::dmatrix   * B::dmatrix)        |
+sum (C::dmatrix,A::dmatrix^' * B::dmatrix)        |
+sum (C::dmatrix,A::dmatrix   * B::dmatrix^')      |
+sum (C::dmatrix,A::dmatrix^' * B::dmatrix^')      |
+sum (C::dmatrix,A::dmatrix   * B::dmatrix,rest)   |
+sum (C::dmatrix,A::dmatrix^' * B::dmatrix,rest)   |
+sum (C::dmatrix,A::dmatrix   * B::dmatrix^',rest) |
+sum (C::dmatrix,A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
+
+/* catch all rules that resolve into ::* and ::+ */
+
+// TO DO
+
+
+/* least priority rules resolving a multiplication alone. */
+
+/* matrix-vector */
+
+sum (A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
+    if mx == 1 && mA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        out = double_matrix (nA,1) NULL;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
+    end;
+sum (A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
+    if mx == 1 && nA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        ny, my = dim y;
+        out = double_matrix (mA,1) NULL;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
+    end;
+
+/* vector-matrix */
+
+/* matrix-matrix */
+
+// TO DO
+
+/* wrong dimensions */
+
+/*sum (A::dmatrix   * B::dmatrix,rest)   |
+sum (A::dmatrix^' * B::dmatrix,rest)   |
+sum (A::dmatrix   * B::dmatrix^',rest) |
+sum (A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;*/
+
+/* catch all rules that resolve into ::* and ::+ */
+
+// TO DO
+
+
+// matrix-vector outer multiplication
+A::dmatrix ::* x::dmatrix = y
+    if mx == 1 && mA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        y = double_matrix (nA,1) NULL;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+A::dmatrix^' ::* x::dmatrix = y
+    if mx == 1 && nA == nx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        y = double_matrix (mA,1) NULL;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+
+// vector-matrix outer multiplication
+x::dmatrix ::* A::dmatrix = y
+    if nx == 1 && nA == mx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        y = double_matrix (1,mA) NULL;
+        _ = cblas_dgemv CblasColMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+x::dmatrix ::* A::dmatrix^' = y
+    if nx == 1 && mA == mx
+    when
+        nA, mA = dim A;
+        nx, mx = dim x;
+        y = double_matrix (1,nA) NULL;
+        _ = cblas_dgemv CblasColMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 y 1;
+    end;
+
+// matrix-matrix outer multiplication
+A::dmatrix ::* B::dmatrix = C
+    if mA == nB
+    when
+        nA, mA = dim A;
+        nB, mB = dim B;
+        C = double_matrix (nA,mB) NULL;
+        _ = cblas_dgemm CblasColMajor CblasNoTrans CblasNoTrans nA mB mA 1.0 A nA B nB 1.0 C nA;
+    end;
+A::dmatrix^' ::* B::dmatrix = C
+    if nA == nB
+    when
+        nA, mA = dim A;
+        nB, mB = dim B;
+        C = double_matrix (mA,mB) NULL;
+        _ = cblas_dgemm CblasColMajor CblasTrans CblasNoTrans mA mB nA 1.0 A nA B nB 1.0 C nA;
+    end;
+A::dmatrix ::* B::dmatrix^' = C
+    if mA == mB
+    when
+        nA, mA = dim A;
+        nB, mB = dim B;
+        C = double_matrix (nA,nB) NULL;
+        _ = cblas_dgemm CblasColMajor CblasNoTrans CblasTrans nA nB mA 1.0 A nA B nB 1.0 C nA;
+    end; 
+A::dmatrix^' ::* B::dmatrix^' = C
+    if nA == mB
+    when
+        nA, mA = dim A;
+        nB, mB = dim B;
+        C = double_matrix (mA,nB) NULL;
+        _ = cblas_dgemm CblasColMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
+    end;
+
+// catch all error
+A::dmatrix ::* B::dmatrix = throw dimensions_mismatch;
+A::dmatrix^' ::* B::dmatrix = throw dimensions_mismatch;
+A::dmatrix ::* B::dmatrix^' = throw dimensions_mismatch;
+A::dmatrix^' ::* B::dmatrix^' = throw dimensions_mismatch;
+
+namespace;

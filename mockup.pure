@@ -1,0 +1,53 @@
+// testing
+using system;
+
+infix (*) __*;
+
+def (a*b)*c   |
+    a*(b*c) = mul (a,b,c);
+def mul l * a = mul (l,a);
+
+def sum l + a*b = sum(l,a __* b);
+def sum l1 + mul l2 = sum(l1,in_mul l2);
+def sum l + a = sum (a,l);
+
+def a*b + c*d = sum (a __* b,c __* d);
+def mul l + a*b |
+    a*b + mul l = sum(a __* b,in_mul l);
+def mul l1 + mul l2 = sum(in_mul l1,in_mul l2);
+
+def a*b + c |
+    c + a*b = sum (c,a __* b);
+def mul l + c |
+    c + mul l = sum (c,in_mul l);
+
+def sum (a+b,rest) = sum(a,b,rest);
+
+// mul +  mul
+
+mul (a::var,b::var,c::var,rest) = mul (ab,c,rest); // this should choose if doing a*b or b*c first
+mul (a::var,b::var,c::var) = ab * c;
+in_mul (a::var,b::var,c::var,rest) = in_mul (ab,c,rest);
+in_mul (a::var,b::var,c::var) = ab __* c;
+
+// mul + add
+sum (tmp c::var,a __* b) = result;
+sum (tmp c::var,a::var __* b::var,rest) = sum (tmp tboth,rest);
+
+//sum (a::var __* b::var,c::var,rest) |
+sum (c::var,a __* b,rest) = sum (tmp both,rest);
+
+sum (a::var __* b::var,rest) = sum (tmp single,rest);
+
+sum (tmp a::var, b::var,rest) = sum (tmp mysum,rest); 
+sum (a::var, b::var,rest) = sum (tmp mysum,rest); 
+
+a::var * b::var = mymul;
+
+let ex1 = x*y*z*k;
+let ex2 = x+x+x+x+x*x + y*y + z*z +k+k+k+k+k h*h;
+let ex3 = x*(y*y*y*x+ k +z*z) + k*k*b;
+
+puts $ str ex1;
+puts $ str ex2;
+puts $ str ex3;
