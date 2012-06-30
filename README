@@ -1,0 +1,11 @@
+pure-linalg is an experimental linear algebra library for Pure.
+
+its main objective is to provide a way of writing linear algebra 
+equation in an intuitive way with the least sacrifice possible 
+in terms of speed.
+
+this is achieved by applying the powerful term rewriting capabilities
+of Pure which make it simple to translate linear algebra equations 
+into an optimized sequence of BLAS calls.
+
+it is currently in a prototype status and is not intended for use 
