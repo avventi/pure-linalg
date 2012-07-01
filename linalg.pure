@@ -153,9 +153,13 @@ the associativity property is used to reduce the number of flops.
 this optimization is performed locally, considering three terms 
 at a time, and is thus suboptimal.*/
 
-/*mul (a::var,b::var,c::var,rest) = mul (ab,c,rest);
-mul (a::var,b::var,c::var) = ab ::* c;
-in_mul (a::var,b::var,c::var,rest) = in_mul (ab,c,rest);
+//mul (A::dmatrix,B::dmatrix,C::dmatrix,rest) = mul (D,C,rest)
+
+
+//mul (A::dmatrix,B::dmatrix,C::dmatrix) = D ::* C;
+
+
+/*in_mul (a::var,b::var,c::var,rest) = in_mul (ab,c,rest);
 in_mul (a::var,b::var,c::var) = ab * c; */
 
 
@@ -295,10 +299,9 @@ sum (C::dmatrix,A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
 /* matrix-vector */
 
 sum (A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
-    if mx == 1 && mA == nx
+    if (dim x ! 1) == 1 && (dim A ! 1) == (dim x ! 0)
     when
         nA, mA = dim A;
-        nx, mx = dim x;
         out = double_matrix (nA,1) NULL;
         _ = cblas_dgemv CblasRowMajor CblasNoTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
@@ -320,10 +323,10 @@ sum (A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
 
 /* wrong dimensions */
 
-/*sum (A::dmatrix   * B::dmatrix,rest)   |
+sum (A::dmatrix   * B::dmatrix,rest)   |
 sum (A::dmatrix^' * B::dmatrix,rest)   |
 sum (A::dmatrix   * B::dmatrix^',rest) |
-sum (A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;*/
+sum (A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
 
 /* catch all rules that resolve into ::* and ::+ */
 
@@ -401,9 +404,9 @@ A::dmatrix^' ::* B::dmatrix^' = C
     end;
 
 // catch all error
-A::dmatrix ::* B::dmatrix = throw dimensions_mismatch;
-A::dmatrix^' ::* B::dmatrix = throw dimensions_mismatch;
-A::dmatrix ::* B::dmatrix^' = throw dimensions_mismatch;
+A::dmatrix   ::* B::dmatrix   |
+A::dmatrix^' ::* B::dmatrix   |
+A::dmatrix   ::* B::dmatrix^' |
 A::dmatrix^' ::* B::dmatrix^' = throw dimensions_mismatch;
 
 namespace;
