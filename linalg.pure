@@ -410,14 +410,23 @@ A::dmatrix^' ::* B::dmatrix^' = C
         _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
     end;
 
-// summation
-
-A::dmatrix ::+ B::dmatrix = zipwith (::+) A B;
-
 // catch all error
 A::dmatrix   ::* B::dmatrix   |
 A::dmatrix^' ::* B::dmatrix   |
 A::dmatrix   ::* B::dmatrix^' |
 A::dmatrix^' ::* B::dmatrix^' = throw dimensions_mismatch;
+
+/* summation */
+
+// mixed sums between transpose and non-transpose needs to be implemented
+
+A::dmatrix ::+ B::dmatrix = zipwith (::+) A B if dim A == dim B;
+A::dmatrix^' ::+ B::dmatrix^' = (zipwith (::+) A B)^' if dim A == dim B;
+
+A::dmatrix   ::+ B::dmatrix   |
+//A::dmatrix^' ::+ B::dmatrix   |
+//A::dmatrix   ::+ B::dmatrix^' |
+A::dmatrix^' ::+ B::dmatrix^' = throw dimensions_mismatch;
+   
 
 namespace;
