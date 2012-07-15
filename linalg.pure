@@ -108,7 +108,7 @@ private tmp;    // function that wraps temporary results
 /* preprocessing of algebraic expressions */
 
 // substitute multiplication chains with the private function __linalg::mul
-#! --ifdef optmul
+#! --if optmul
 def (a ::* b) ::* c   |
     a ::*(b ::* c) = mul (a,b,c);
 def mul l ::* a = mul (l,a);
@@ -128,7 +128,7 @@ private function __linalg::in_mul is used instead of __linalg::mul
 all terms containing no multiplication are moved at the head of the 
 tuple. */
 
-#! --ifdef optsum
+#! --if optsum
 def sum l ::+ a ::* b = sum(l,a * b);
 def sum l1 ::+ mul l2 = sum(l1,in_mul l2);
 def sum l ::+ a = sum (a,l);
@@ -143,7 +143,7 @@ def a ::* b ::+ c |
 def mul l ::+ c |
     c ::+ mul l = sum (c,in_mul l);
 
-def sum (a::+b,rest) = sum(a,b,rest);
+def sum (a ::+ b,rest) = sum(a,b,rest);
 #! --endif
 
 /* resolving multiplication chains first 
@@ -405,6 +405,7 @@ A::dmatrix^' ::* B::dmatrix^' = C
         C = double_matrix (mA,nB) NULL;
         _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
     end;
+
 
 // catch all error
 A::dmatrix   ::* B::dmatrix   |
