@@ -406,6 +406,9 @@ A::dmatrix^' ::* B::dmatrix^' = C
         _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
     end;
 
+// summation
+
+A::dmatrix ::+ B::dmatrix = zipwith (::+) A B;
 
 // catch all error
 A::dmatrix   ::* B::dmatrix   |
