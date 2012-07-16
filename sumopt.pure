@@ -1,3 +1,7 @@
+using namespace __cblas, __linalg;
+
+namespace __linalg;
+
 /* substitute addition chains containing multiplications terms with
  the private function __linalg::sum
 
@@ -11,7 +15,7 @@ private function __linalg::in_mul is used instead of __linalg::mul
 all terms containing no multiplication are moved at the head of the 
 tuple. */
 
-#! --ifnot simplesum
+
 def sum l ::+ a ::* b = sum(l,a * b);
 def sum l1 ::+ mul l2 = sum(l1,in_mul l2);
 def sum l ::+ a = sum (a,l);
@@ -27,7 +31,7 @@ def mul l ::+ c |
     c ::+ mul l = sum (c,in_mul l);
 
 def sum (a ::+ b,rest) = sum(a,b,rest);
-#! --endif
+
 
 /* highest priority rules resolving a sum and a multiplication in 
 the form
@@ -39,7 +43,7 @@ modifing them in place.*/
 
 /* vector-matrix-vector */
 
-#! --ifnot simplesum
+
 sum (tmp y::dmatrix,A::dmatrix * x::dmatrix) = y
     if mx == 1 && my == 1 && nA == ny && mA == nx
     when
@@ -73,7 +77,7 @@ sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp y,rest)
         ny, my = dim y;
         _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
     end;
-#! --endif
+
 
 /* vector-vector-matrix */
 
@@ -83,7 +87,7 @@ sum (tmp y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp y,rest)
 
 /* wrong dimensions */
 
-#! --ifnot simplesum
+
 sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix)        |
 sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix)        |
 sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix^')      |
@@ -92,7 +96,7 @@ sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix,rest)   |
 sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix,rest)   |
 sum (tmp C::dmatrix,A::dmatrix   * B::dmatrix^',rest) |
 sum (tmp C::dmatrix,A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
-#! --endif
+
 
 /* catch all rules that resolve into ::* and ::+ */
 
@@ -106,7 +110,7 @@ the result is stored in a newly allocated matrix.*/
 
 /* vector-matrix-vector */
 
-#! --ifnot simplesum
+
 sum (y::dmatrix,A::dmatrix * x::dmatrix) = out
     if mx == 1 && my == 1 && nA == ny && mA == nx
     when
@@ -144,7 +148,7 @@ sum (y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
         out = pack y;
         _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
-#! --endif
+
 
 /* vector-vector-matrix */
 
@@ -154,7 +158,7 @@ sum (y::dmatrix,A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
 
 /* wrong dimesnions */
 
-#! --ifnot simplesum
+
 sum (C::dmatrix,A::dmatrix   * B::dmatrix)        |
 sum (C::dmatrix,A::dmatrix^' * B::dmatrix)        |
 sum (C::dmatrix,A::dmatrix   * B::dmatrix^')      |
@@ -163,7 +167,7 @@ sum (C::dmatrix,A::dmatrix   * B::dmatrix,rest)   |
 sum (C::dmatrix,A::dmatrix^' * B::dmatrix,rest)   |
 sum (C::dmatrix,A::dmatrix   * B::dmatrix^',rest) |
 sum (C::dmatrix,A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
-#! --endif
+
 
 /* catch all rules that resolve into ::* and ::+ */
 
@@ -174,7 +178,7 @@ sum (C::dmatrix,A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
 
 /* matrix-vector */
 
-#! --ifnot simplesum
+
 sum (A::dmatrix * x::dmatrix,rest) = sum (tmp out,rest)
     if mx == 1 && mA == nx
     when
@@ -191,7 +195,7 @@ sum (A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
         out = double_matrix (mA,1) NULL;
         _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 out 1;
     end;
-#! --endif
+
 
 /* vector-matrix */
 
@@ -201,13 +205,13 @@ sum (A::dmatrix^' * x::dmatrix,rest) = sum (tmp out,rest)
 
 /* wrong dimensions */
 
-#! --ifnot simplesum
 sum (A::dmatrix   * B::dmatrix,rest)   |
 sum (A::dmatrix^' * B::dmatrix,rest)   |
 sum (A::dmatrix   * B::dmatrix^',rest) |
 sum (A::dmatrix^' * B::dmatrix^',rest) = throw dimensions_mismatch;
-#! --endif
 
 /* catch all rules that resolve into ::* and ::+ */
 
 // TO DO
+
+namespace;
