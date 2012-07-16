@@ -17,6 +17,7 @@
 
 
 using namespace __cblas, __linalg;
+using pointers;
 
 public conj;
 
@@ -143,73 +144,73 @@ in_mul (a::var,b::var,c::var) = ab * c; */
 
 // matrix-vector outer multiplication
 A::dmatrix ::* x::dmatrix = y
-    if mx == 1 && mA == nx
     when
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (nA,1) NULL;
         _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
-    end;
+    end
+    if dim x!1 == 1 && dim A!1 == dim x!0;
 A::dmatrix^' ::* x::dmatrix = y
-    if mx == 1 && nA == nx
     when
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (mA,1) NULL;
         _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
-    end;
+    end 
+    if dim x!1 == 1 && dim A!0 == dim x!0;
 
 // vector-matrix outer multiplication
 x::dmatrix ::* A::dmatrix = y
-    if nx == 1 && nA == mx
     when
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (1,mA) NULL;
         _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
-    end;
+    end
+    if dim x!0 == 1 && dim A!0 == dim x!1;
 x::dmatrix ::* A::dmatrix^' = y
-    if nx == 1 && mA == mx
     when
         nA, mA = dim A;
         nx, mx = dim x;
         y = double_matrix (1,nA) NULL;
         _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
-    end;
+    end
+    if dim x!0 == 1 && dim A!1 == dim x!1;
 
 // matrix-matrix outer multiplication
 A::dmatrix ::* B::dmatrix = C
-    if mA == nB
     when
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (nA,mB) NULL;
         _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans nA mB mA 1.0 A nA B nB 1.0 C nA;
-    end;
+    end
+    if dim A!1 == dim B!0;
 A::dmatrix^' ::* B::dmatrix = C
-    if nA == nB
     when
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (mA,mB) NULL;
         _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans mA mB nA 1.0 A nA B nB 1.0 C nA;
-    end;
+    end 
+    if dim A!0 == dim B!0;
 A::dmatrix ::* B::dmatrix^' = C
-    if mA == mB
     when
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (nA,nB) NULL;
         _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans nA nB mA 1.0 A nA B nB 1.0 C nA;
-    end; 
+    end
+    if dim A!1 == dim B!1; 
 A::dmatrix^' ::* B::dmatrix^' = C
-    if nA == mB
     when
         nA, mA = dim A;
         nB, mB = dim B;
         C = double_matrix (mA,nB) NULL;
         _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
-    end;
+    end
+    if dim A!0 == dim B!1;
 
 // catch all error
 A::dmatrix   ::* B::dmatrix   |
@@ -219,14 +220,14 @@ A::dmatrix^' ::* B::dmatrix^' = throw dimensions_mismatch;
 
 /* summation */
 
-// mixed sums between transpose and non-transpose needs to be implemented
-
-A::dmatrix ::+ B::dmatrix = zipwith (::+) A B if dim A == dim B;
+A::dmatrix   ::+ B::dmatrix   = zipwith (::+) A B if dim A == dim B;
 A::dmatrix^' ::+ B::dmatrix^' = (zipwith (::+) A B)^' if dim A == dim B;
 
+    
+
 A::dmatrix   ::+ B::dmatrix   |
-//A::dmatrix^' ::+ B::dmatrix   |
-//A::dmatrix   ::+ B::dmatrix^' |
+A::dmatrix^' ::+ B::dmatrix   |
+A::dmatrix   ::+ B::dmatrix^' |
 A::dmatrix^' ::+ B::dmatrix^' = throw dimensions_mismatch;
    
 
