@@ -216,28 +216,26 @@ A::dmatrix^' ::* B::dmatrix^' = throw dimensions_mismatch;
 
 /* summation */
 
-A::dmatrix   ::+ B::dmatrix   = zipwith (::+) A B if dim A == dim B;
-A::dmatrix^' ::+ B::dmatrix^' = (zipwith (::+) A B)^' if dim A == dim B;
+A::dmatrix ::+ B::dmatrix = C
+    when
+        C = pack B;
+        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+    end
+    if dim A == dim B;
+A::dmatrix^' ::+ B::dmatrix^' = (C)^' 
+    when
+        C = pack B;
+        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+    end
+    if dim A == dim B;
 A::dmatrix^' ::+ B::dmatrix   |
 B::dmatrix   ::+ A::dmatrix^' = C
-    when 
-        n, m = dim B;
-        C = pack B;
-        pA = pointer A;
-        pC = pointer C;
-        _ = sum_t pA pC n n m C;
-    end
-    with
-        sum_t p1 p2 0 n m C = ();
-        sum_t p1 p2 k n m C = sum_t p3 p4 (k-1) n m C
-            when
-                // sum (n-p)-th column of A to the (n-p)-th row of C
-                _ = cblas_daxpy m 1.0 p1 n p2 1;
-                p3 = p1 + 8; // advance by one step on A
-                p4 = p2 + 8::*m; // advance to next row on C
-            end;
+    when
+        C = transpose A;
+        _ = cblas_daxpy (#B) 1.0 B 1 C 1;
     end
     if dim (A^') == dim B;
+
     
 // catch all error
 A::dmatrix   ::+ B::dmatrix   |
