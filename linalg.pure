@@ -177,34 +177,34 @@ x::dmatrix ::* A::dmatrix^' = y
 // matrix-matrix outer multiplication
 A::dmatrix ::* B::dmatrix = C
     when
-        nA, mA = dim A;
-        nB, mB = dim B;
-        C = double_matrix (nA,mB) NULL;
-        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans nA mB mA 1.0 A nA B nB 1.0 C nA;
+        mA, nA = dim A;
+        mB, nB = dim B;
+        C = double_matrix (mA,nB) NULL;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans mA nB nA 1.0 A nA B nB 1.0 C nB;
     end
     if dim A!1 == dim B!0;
 A::dmatrix^' ::* B::dmatrix = C
     when
-        nA, mA = dim A;
-        nB, mB = dim B;
-        C = double_matrix (mA,mB) NULL;
-        _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans mA mB nA 1.0 A nA B nB 1.0 C nA;
+        mA, nA = dim A;
+        mB, nB = dim B;
+        C = double_matrix (nA,nB) NULL;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans nA nB mA 1.0 A nA B nB 1.0 C nB;
     end 
     if dim A!0 == dim B!0;
 A::dmatrix ::* B::dmatrix^' = C
     when
-        nA, mA = dim A;
-        nB, mB = dim B;
-        C = double_matrix (nA,nB) NULL;
-        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans nA nB mA 1.0 A nA B nB 1.0 C nA;
+        mA, nA = dim A;
+        mB, nB = dim B;
+        C = double_matrix (mA,mB) NULL;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans mA mB nA 1.0 A nA B nB 1.0 C mB;
     end
     if dim A!1 == dim B!1; 
 A::dmatrix^' ::* B::dmatrix^' = C
     when
-        nA, mA = dim A;
-        nB, mB = dim B;
-        C = double_matrix (mA,nB) NULL;
-        _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans mA nB nA 1.0 A nA B nB 1.0 C nA;
+        mA, nA = dim A;
+        mB, nB = dim B;
+        C = double_matrix (nA,mB) NULL;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans nA mB mA 1.0 A nA B nB 1.0 C mB;
     end
     if dim A!0 == dim B!1;
 
