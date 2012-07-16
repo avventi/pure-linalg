@@ -145,35 +145,31 @@ in_mul (a::var,b::var,c::var) = ab * c; */
 // matrix-vector outer multiplication
 A::dmatrix ::* x::dmatrix = y
     when
-        nA, mA = dim A;
-        nx, mx = dim x;
-        y = double_matrix (nA,1) NULL;
+        mA, nA = dim A;
+        y = double_matrix (mA,1) NULL;
         _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
     end
     if dim x!1 == 1 && dim A!1 == dim x!0;
 A::dmatrix^' ::* x::dmatrix = y
     when
-        nA, mA = dim A;
-        nx, mx = dim x;
-        y = double_matrix (mA,1) NULL;
-        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        mA, nA = dim A;
+        y = double_matrix (nA,1) NULL;
+        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA 1.0 A nA x 1 1.0 y 1;
     end 
     if dim x!1 == 1 && dim A!0 == dim x!0;
 
 // vector-matrix outer multiplication
 x::dmatrix ::* A::dmatrix = y
     when
-        nA, mA = dim A;
-        nx, mx = dim x;
-        y = double_matrix (1,mA) NULL;
-        _ = cblas_dgemv CblasRowMajor CblasTrans nA mA 1.0 A nA x 1 1.0 y 1;
+        mA, nA = dim A;
+        y = double_matrix (1,nA) NULL;
+        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA 1.0 A nA x 1 1.0 y 1;
     end
     if dim x!0 == 1 && dim A!0 == dim x!1;
 x::dmatrix ::* A::dmatrix^' = y
     when
-        nA, mA = dim A;
-        nx, mx = dim x;
-        y = double_matrix (1,nA) NULL;
+        mA, nA = dim A;
+        y = double_matrix (1,mA) NULL;
         _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
     end
     if dim x!0 == 1 && dim A!1 == dim x!1;
@@ -222,7 +218,15 @@ A::dmatrix^' ::* B::dmatrix^' = throw dimensions_mismatch;
 
 A::dmatrix   ::+ B::dmatrix   = zipwith (::+) A B if dim A == dim B;
 A::dmatrix^' ::+ B::dmatrix^' = (zipwith (::+) A B)^' if dim A == dim B;
-
+/*A::dmatrix^' ::+ B::dmatrix   |
+B::dmatrix   ::+ A::dmatrix^' = C
+    when 
+        n, m = dim B;
+        C = pack B;
+        pA = pointer A;
+        pC = pointer C;
+    end
+    if dim (A^') == dim B;*/
     
 
 A::dmatrix   ::+ B::dmatrix   |
