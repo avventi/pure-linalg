@@ -1,0 +1,231 @@
+/*  Copyright (c) 2012 by Enrico Avventi, <eavventi yahoo it>
+
+    This file is part of pure-linalg.
+
+    pure-linalg is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    pure-linalg is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with pure-linalg.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
+
+/**********************************************************
+****            preliminary definitions                ****
+**********************************************************/
+
+
+/* transpose and adjoint operators */
+postfix (^) ^' ^*;
+
+dim (A::matrix^') |
+dim (A::matrix^*) = m,n when n,m = dim A; end;
+
+// indexing
+A::matrix^'!(i,j) = A!(j,i);
+A::matrix^*!(i,j) = conj A!(j,i);
+
+// slicing
+A::matrix^'!!(is,js) = (A!!(js,is))^';
+A::matrix^*!!(is,js) = (A!!(js,is))^*;
+
+// these operations do not require data movement so can resolved automatically
+(A::matrix^')^' = A;
+v::matrix^' = rowvector v if colvectorp v;
+v::matrix^' = colvector v if rowvectorp v;
+
+(A::matrix^*)^* = A;
+A::dmatrix^* = A^';
+A::imatrix^* = A^'; // integer matrices are not supported by blas
+
+// pack will force the evaluation
+pack (A::matrix^') = transpose A;
+pack (A::matrix^*) = transpose $ conj A; // FIX ME: this needs to be done in one go
+
+/* definition of extended matrices type */
+
+xmatrixp A::dmatrix = true;
+xmatrixp (A::dmatrix^') = true;
+
+type xmatrix = xmatrixp;
+
+
+
+/**********************************************************
+****                  blas wrappers                    ****
+**********************************************************/
+
+
+namespace __cblas;
+using "lib:libblas";
+
+// getting various enums values for controlling blas routines
+using "lib:cblas_enums";
+
+// row or colum major enums
+private extern void* row_major();
+private extern void* col_major();
+
+const CblasRowMajor = row_major;
+const CblasColMajor = col_major;
+
+// transpose and adjoint enums
+private extern void* no_trans();
+private extern void* trans();
+private extern void* conj_trans();
+
+const CblasNoTrans = no_trans;
+const CblasTrans = trans;
+const CblasConjTrans = conj_trans;
+
+/* daxpy */
+extern void cblas_daxpy(int n,double alpha,void* x,int incx,void* y,int incy);
+
+/* dgemv */
+extern void cblas_dgemv(void* order, void* transA, int M, int N, double alpha,
+    double* A, int lda, double* x, int incx, double beta, double* y, int incy);
+
+/* dgemm */
+extern void cblas_dgemm(void* order, void* transA, void* transB, int M, int N, 
+    int K, double alpha, double* A, int lda, double* B, int ldb, double beta, 
+    double* C, int ldc);
+namespace;
+
+
+
+/**********************************************************
+****           basic function definitions              ****
+**********************************************************/
+
+
+/* matrix-vector inplace multiplication and summation
+
+    M*x + y -> y
+
+where M is an xmatrix
+*/
+
+inplace_mulsum A::dmatrix x::dmatrix y::dmatrix = ()
+    when
+        mA, nA = dim A;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
+    end
+    if dim x!1 == 1 && dim A!1 == dim x!0 && dim y!1 == 1 && dim y!0 == dim A!0;
+
+inplace_mulsum (A::dmatrix^') x::dmatrix y::dmatrix = ()
+    when
+        mA, nA = dim A;
+        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA 1.0 A nA x 1 1.0 y 1;
+    end 
+    if dim x!1 == 1 && dim A!0 == dim x!0 && dim y!1 == 1 && dim y!0 == dim A!1;
+
+
+/* vector-matrix inplace multiplication and summation
+
+    x*M + y -> y
+
+where M is an xmatrix
+*/
+
+inplace_mulsum x::dmatrix A::dmatrix y::dmatrix = ()
+    when
+        mA, nA = dim A;
+        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA 1.0 A nA x 1 1.0 y 1;
+    end
+    if dim x!0 == 1 && dim A!0 == dim x!1 && dim y!0 == 1 && dim y!1 == dim A!1;
+
+inplace_mulsum x::dmatrix (A::dmatrix^') y::dmatrix = ()
+    when
+        mA, nA = dim A;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
+    end
+    if dim x!0 == 1 && dim A!1 == dim x!1 && dim y!0 == 1 && dim y!1 == dim A!0;
+
+
+/* matrix-matrix inplace multiplication and summation
+
+    H*F + C -> C
+
+where H and F are xmatrix
+*/
+
+inplace_mulsum A::dmatrix B::dmatrix C::dmatrix = ()
+    when
+        mA, nA = dim A;
+        mB, nB = dim B;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans mA nB nA 1.0 A nA B nB 1.0 C nB;
+    end
+    if dim A!1 == dim B!0 && dim A!0 == dim C!0 && dim B!1 == dim C!1;
+
+inplace_mulsum (A::dmatrix^') B::dmatrix C::dmatrix = ()
+    when
+        mA, nA = dim A;
+        mB, nB = dim B;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans nA nB mA 1.0 A nA B nB 1.0 C nB;
+    end 
+    if dim A!0 == dim B!0 && dim A!1 == dim C!0 && dim B!1 == dim C!1;
+
+inplace_mulsum A::dmatrix (B::dmatrix^') C::dmatrix = ()
+    when
+        mA, nA = dim A;
+        mB, nB = dim B;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans mA mB nA 1.0 A nA B nB 1.0 C mB;
+    end
+    if dim A!1 == dim B!1 && dim A!0 == dim C!0 && dim B!0 == dim C!1;
+
+inplace_mulsum (A::dmatrix^') (B::dmatrix^') C::dmatrix = ()
+    when
+        mA, nA = dim A;
+        mB, nB = dim B;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans nA mB mA 1.0 A nA B nB 1.0 C mB;
+    end
+    if dim A!0 == dim B!1 && dim A!1 == dim C!0 && dim B!0 == dim C!1;
+
+// catch all error
+inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
+
+
+/* matrix multiplication */
+ 
+A::xmatrix ::* B::xmatrix = C
+    when
+        C = double_matrix (dim A!0,dim B!1) NULL;
+        out = inplace_matmul A B C; 
+    end
+    if dim A!1 == dim B!0;
+
+A::xmatrix ::* B::xmatrix = throw dimensions_mismatch;
+
+
+/* matrix summation */
+
+A::dmatrix ::+ B::dmatrix = C
+    when
+        C = pack B;
+        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+    end
+    if dim A == dim B;
+A::dmatrix^' ::+ B::dmatrix^' = (C)^' 
+    when
+        C = pack B;
+        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+    end
+    if dim A == dim B;
+A::dmatrix^' ::+ B::dmatrix   |
+B::dmatrix   ::+ A::dmatrix^' = C
+    when
+        C = transpose A;
+        _ = cblas_daxpy (#B) 1.0 B 1 C 1;
+    end
+    if dim (A^') == dim B;
+
+    
+// catch all error
+A::xmatrix ::+ B::xmatrix = throw dimensions_mismatch;
