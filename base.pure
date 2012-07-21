@@ -68,7 +68,7 @@ dim (eye n::int) = (n,n);
 (eye n)!k = double (k div n == k mod n);
 
 // slicing (will force the evaluation)
-(eye n)!!(ks,ls) = {double (i==j)|i=1..n; j=1..n}!!(ks,ls);
+(eye n)!!(ks,ls) = {double (i==j)|i=ks; j=ls};
 
 // transpose
 (eye n)^' |
@@ -93,7 +93,7 @@ dim (subeye n m k) = (n,m);
 (subeye n m j)!k = double (k div n == (l mod n)-j);
 
 // slicing (will force the evaluation)
-(subeye n m k)!!(ks,ls) = {double (i==j-k)|i=1..n; j=1..m}!!(ks,ls);
+(subeye n m k)!!(ks,ls) = {double (i==j-k)|i=ks; j=ls};
 
 // transpose
 (subeye n m k)^' |
