@@ -48,6 +48,10 @@ v::matrix^' = colvector v if rowvectorp v;
 A::dmatrix^* = A^';
 A::imatrix^* = A^'; // integer matrices are not supported by blas
 
+(A::matrix ::* B::matrix)^' = B^' ::* A^';
+(A::matrix ::* B::matrix)^* = B^* ::* A^*;
+// TODO: need to add similar rules for functions mul and in_mul
+
 // packing (will force the evaluation)
 pack (A::matrix^') = transpose A;
 pack (A::matrix^*) = transpose $ conj A; // FIX ME: this needs to be done in one go
