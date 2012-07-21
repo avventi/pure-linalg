@@ -58,20 +58,20 @@ dim (eye n::int) = (n,n);
 
 // indexing
 (eye n)!(k,l) = throw out_of_bounds if k<0 || k>=n || l<0 || l>=n;
-(eye n)!(k,l) = k==l;
+(eye n)!(k,l) = double k==l;
 
 (eye n)!k = throw out_of_bounds if k<0 || k>=n*n;
-(eye n)!k = (k div n) == (k mod n);
+(eye n)!k = double (k div n) == (k mod n);
 
 // slicing (will force the evaluation)
-(eye n)!!(ks,ls) = {i==j|i=1..n; j=1..n}!!(ks,ls);
+(eye n)!!(ks,ls) = {double i==j|i=1..n; j=1..n}!!(ks,ls);
 
 // transpose
 (eye n)^' = eye n;
 (eye n)^* = eye n;
 
 // packing (will force the evaluation)
-pack (eye n) = {i==j|i=1..n; j=1..n};
+pack (eye n) = {double i==j|i=1..n; j=1..n};
 
 /* definition of extended matrices type */
 
