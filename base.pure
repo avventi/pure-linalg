@@ -29,12 +29,15 @@ dim (A::matrix^') |
 dim (A::matrix^*) = m,n when n,m = dim A; end;
 
 // indexing
-A::matrix^'!(i,j) = A!(j,i);
-A::matrix^*!(i,j) = conj A!(j,i);
+A::matrix^'!(k,l) = A!(l,k);
+A::matrix^*!(k,l) = conj(A!(l,k));
+
+A::matrix^'!k = A!(k mod n,k div n) when n,m = dim A; end;
+A::matrix^*!k = conj(A!(k mod n,k div n)) when n,m = dim A; end;
 
 // slicing
-A::matrix^'!!(is,js) = (A!!(js,is))^';
-A::matrix^*!!(is,js) = (A!!(js,is))^*;
+A::matrix^'!!(ks,ls) = (A!!(ls,ks))^';
+A::matrix^*!!(ks,ls) = (A!!(ls,ks))^*;
 
 // these operations do not require data movement so can resolved automatically
 (A::matrix^')^' = A;
@@ -45,14 +48,36 @@ v::matrix^' = colvector v if rowvectorp v;
 A::dmatrix^* = A^';
 A::imatrix^* = A^'; // integer matrices are not supported by blas
 
-// pack will force the evaluation
+// packing (will force the evaluation)
 pack (A::matrix^') = transpose A;
 pack (A::matrix^*) = transpose $ conj A; // FIX ME: this needs to be done in one go
+
+/* identity matrix */
+
+dim (eye n::int) = (n,n);
+
+// indexing
+(eye n)!(k,l) = throw out_of_bounds if k<0 || k>=n || l<0 || l>=n;
+(eye n)!(k,l) = k==l;
+
+(eye n)!k = throw out_of_bounds if k<0 || k>=n*n;
+(eye n)!k = (k div n) == (k mod n);
+
+// slicing (will force the evaluation)
+(eye n)!!(ks,ls) = {i==j|i=1..n; j=1..n}!!(ks,ls);
+
+// transpose
+(eye n)^' = eye n;
+(eye n)^* = eye n;
+
+// packing (will force the evaluation)
+pack (eye n) = {i==j|i=1..n; j=1..n};
 
 /* definition of extended matrices type */
 
 xmatrixp A::dmatrix = true;
 xmatrixp (A::dmatrix^') = true;
+xmatrixp (eye n::int) = true;
 
 type xmatrix = xmatrixp;
 
@@ -188,6 +213,43 @@ inplace_mulsum (A::dmatrix^') (B::dmatrix^') C::dmatrix = ()
     end
     if dim A!0 == dim B!1 && dim A!1 == dim C!0 && dim B!0 == dim C!1;
 
+
+/* multiplication with identity */
+
+//inplace_mulsum (eye n::int) (eye n::int) C::dmatrix =
+
+inplace_mulsum A::dmatrix (eye n::int) C::dmatrix = ()
+    when 
+        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+    end
+    if dim A == dim C && dim A!1 == n; 
+
+inplace_mulsum (eye n::int) A::dmatrix C::dmatrix = ()
+    when 
+        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+    end
+    if dim A == dim C && dim A!0 == n;
+
+#! -if notmp
+inplace_mulsum (A::dmatrix^') (eye n::int) C::dmatrix = ()
+    when 
+        At = transpose A;
+        _ = cblas_daxpy (#At) 1.0 At 1 C 1;
+    end
+    if dim (A^') == dim C && dim A!0 == n; 
+
+inplace_mulsum (eye n::int) (A::dmatrix^') C::dmatrix = ()
+    when 
+        At = transpose A;
+        _ = cblas_daxpy (#At) 1.0 At 1 C 1;
+    end
+    if dim (A^') == dim C && dim A!1 == n;
+#! -endif
+
+#! -ifnot notmp
+// versions without temporary
+#! -endif
+
 // catch all error
 inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 
@@ -197,7 +259,7 @@ inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 A::xmatrix ::* B::xmatrix = C
     when
         C = double_matrix (dim A!0,dim B!1) NULL;
-        out = inplace_matmul A B C; 
+        _ = inplace_matmul A B C; 
     end
     if dim A!1 == dim B!0;
 
