@@ -42,6 +42,9 @@ A::matrix^*!k = conj(A!(k mod n,k div n)) when n,m = dim A; end;
 A::matrix^'!!(ks,ls) = (A!!(ls,ks))^';
 A::matrix^*!!(ks,ls) = (A!!(ls,ks))^*;
 
+A::matrix^'!!ks = (transpose A)!!ks;
+A::matrix^*!!ks = (transpose $ conj A)!!ks;
+
 // these operations do not require data movement so can resolved automatically
 (A::matrix^')^' = A;
 v::matrix^' = rowvector v if colvectorp v;
