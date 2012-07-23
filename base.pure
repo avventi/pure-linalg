@@ -15,6 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with pure-linalg.  If not, see <http://www.gnu.org/licenses/>.*/
 
+using namespace __cblas, __linalg;
+
+public conj;
 
 
 /**********************************************************
@@ -288,7 +291,7 @@ inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 A::xmatrix ::* B::xmatrix = C
     when
         C = double_matrix (dim A!0,dim B!1) NULL;
-        _ = inplace_matmul A B C; 
+        _ = inplace_mulsum A B C; 
     end
     if dim A!1 == dim B!0;
 
