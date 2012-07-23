@@ -1,23 +1,54 @@
 // testing
-using system;
 
-using linalg;
+// pure -c test.pure -o runtest -L/usr/lib/
 
+using system, base;
+using namespace __cblas;
 
-let n = 400;
+// rough unit testing macros
+def assert_eq name expr1 expr2 = __ifelse__ (catch (cst false) (expr1 == expr2)) () puts ("Test failed: "+name);
+def assert_err name expr1 err = __ifelse__ (catch (id) expr1 === err) () puts ("Test failed: "+name);
 
-let A = double_matrix (n,n) NULL;
-let B = double_matrix (n,2) NULL;
+/* transpose */
 
-let M = {1.0, 2.0; 3.0, 2.0};
-let N = {0.0, 1.0; 0.0, 0.0};
-let x = {1.0; 1.0};
-let y = {10.0; 0.0};
+let A = {1,2;3,4;5,6};
+let At = transpose A;
 
-let out = A*B; 
+assert_eq "transpose_s_index" (A^'!2) (At!2);
+assert_err "transpose_s_index_oob_low" (A^'!(-1)) out_of_bounds;
+assert_err "transpose_s_index_oob_high" (A^'!6) out_of_bounds;
 
-//let out = y + M*x;
+assert_eq "transpose_d_index" (A^'!(1,2)) (At!(1,2));
+assert_err "transpose_d_index_oob_low1" (A^'!(-1,0)) out_of_bounds;
+assert_err "transpose_d_index_oob_low2" (A^'!(0,-1)) out_of_bounds;
+assert_err "transpose_d_index_oob_high1" (A^'!(2,0)) out_of_bounds;
+assert_err "transpose_d_index_oob_high2" (A^'!(0,3)) out_of_bounds;
 
-puts $ str $ dim out;
-//puts $ str y;
-//puts $ str out;
+/* multiplication */
+
+let n = 3;
+let m = 2;
+
+let A = dmatrix {j==1 | i=1..n; j=1..m};
+let B = dmatrix {j==1 | i=1..m; j=1..n};
+let C = dmatrix {j==1 | i=1..n; j=1..n};
+
+assert_eq "matmul_nn" (A*B) C;
+assert_err "matmul_nn_exc" A*C dimensions_mismatch;
+
+let C = dmatrix {i==1 | i=1..m; j=1..m};
+
+assert_eq "matmul_tt" (A^'*B^') C;
+assert_err "matmul_tt_exc" (A^'*C^') dimensions_mismatch;
+
+let A = dmatrix {i==1 | i=1..n; j=1..m};
+let B = dmatrix {i==1 | i=1..n; j=1..m};
+let C = dmatrix {m*(i==1 && j==1) | i=1..n; j=1..n};
+
+assert_eq "matmul_nt" (A*B^') C;
+assert_err "matmul_nt_exc" (A*C^') dimensions_mismatch;
+
+let C = {1.0 | i=1..m; j=1..m};
+
+assert_eq "matmul_tn" (B^'*A) C;
+assert_err "matmul_nt_exc" (C^'*A) dimensions_mismatch;
