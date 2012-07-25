@@ -19,8 +19,6 @@
 using namespace __cblas, __linalg;
 using base;
 
-public conj;
-
 
 /**********************************************************
 ****              algebraic formulas                   ****
@@ -41,6 +39,8 @@ infix (::*) *;
 #! --endif
 
 /* preprocessing of algebraic expressions */
+
+
 
 /* substitute multiplication chains with the private function __linalg::mul */
 #! --if optmul
@@ -82,6 +82,19 @@ def mul l ::+ c |
 
 def sum (a ::+ b,rest) = sum(a,b,rest);
 #! --endif
+
+/* transpose/adjoint optimizations */
+
+def (A ::* B)^' = B^' ::* A^';
+def (A ::* B)^* = B^* ::* A^*;
+def (mul l)^' = mul $ iter_trans l 
+    with
+        iter_trans (A,rest) = (iter_trans rest, A^');
+    end;
+def (mul l)^* = mul $ iter_adj l 
+    with
+        iter_adj (A,rest) = (iter_adj rest, A^*);
+    end;
 
 /* resolving multiplication chains first 
 
