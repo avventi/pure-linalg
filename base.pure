@@ -261,7 +261,7 @@ inplace_mulsum (eye n::int) A::dmatrix C::dmatrix = ()
     end
     if dim A == dim C && dim A!0 == n;
 
-#! -if notmp
+#! --if notmp
 inplace_mulsum (A::dmatrix^') (eye n::int) C::dmatrix = ()
     when 
         At = transpose A;
@@ -275,11 +275,9 @@ inplace_mulsum (eye n::int) (A::dmatrix^') C::dmatrix = ()
         _ = cblas_daxpy (#At) 1.0 At 1 C 1;
     end
     if dim (A^') == dim C && dim A!1 == n;
-#! -endif
-
-#! -ifnot notmp
+#! --else
 // versions without temporary
-#! -endif
+#! --endif
 
 // catch all error
 inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
