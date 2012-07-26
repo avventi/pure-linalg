@@ -2,8 +2,7 @@
 
 // pure -c test.pure -o runtest -L/usr/lib/
 
-using system, base, linalg;
-using namespace __cblas;
+using system, linalg;
 
 // rough unit testing macros
 def assert_eq name expr1 expr2 = __ifelse__ (catch (cst false) (expr1 == expr2)) () puts ("Test failed: "+name);
