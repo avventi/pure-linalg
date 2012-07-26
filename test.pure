@@ -2,7 +2,7 @@
 
 // pure -c test.pure -o runtest -L/usr/lib/
 
-using system, base;
+using system, base, linalg;
 using namespace __cblas;
 
 // rough unit testing macros
@@ -36,10 +36,14 @@ let C = dmatrix {j==1 | i=1..n; j=1..n};
 assert_eq "matmul_nn" (A*B) C;
 assert_err "matmul_nn_exc" A*C dimensions_mismatch;
 
+assert_eq "mulsum_symm_nntt" (A*B + (A*B)^') (C + C^');
+
 let C = dmatrix {i==1 | i=1..m; j=1..m};
 
 assert_eq "matmul_tt" (A^'*B^') C;
 assert_err "matmul_tt_exc" (A^'*C^') dimensions_mismatch;
+
+assert_eq "mulsum_symm_ttnn" ((B*A)^' + B*A) (C + C^');
 
 let A = dmatrix {i==1 | i=1..n; j=1..m};
 let B = dmatrix {i==1 | i=1..n; j=1..m};
@@ -48,7 +52,47 @@ let C = dmatrix {m*(i==1 && j==1) | i=1..n; j=1..n};
 assert_eq "matmul_nt" (A*B^') C;
 assert_err "matmul_nt_exc" (A*C^') dimensions_mismatch;
 
+assert_eq "mulsum_symm_nttn" (A*B^' + (A*B^')^') (C + C^');
+
 let C = {1.0 | i=1..m; j=1..m};
 
 assert_eq "matmul_tn" (B^'*A) C;
 assert_err "matmul_nt_exc" (C^'*A) dimensions_mismatch;
+
+assert_eq "mulsum_symm_tnnt" (A^'*B + (A^'*B)^') (C + C^');
+
+// repeat with inverted dimensions
+let n = 2;
+let m = 3;
+
+let A = dmatrix {j==1 | i=1..n; j=1..m};
+let B = dmatrix {j==1 | i=1..m; j=1..n};
+let C = dmatrix {j==1 | i=1..n; j=1..n};
+
+assert_eq "matmul_nn2" (A*B) C;
+assert_err "matmul_nn_exc2" A*C dimensions_mismatch;
+
+assert_eq "mulsum_symm_nntt2" (A*B + (A*B)^') (C + C^');
+
+let C = dmatrix {i==1 | i=1..m; j=1..m};
+
+assert_eq "matmul_tt2" (A^'*B^') C;
+assert_err "matmul_tt_exc2" (A^'*C^') dimensions_mismatch;
+
+assert_eq "mulsum_symm_ttnn2" ((B*A)^' + B*A) (C + C^');
+
+let A = dmatrix {i==1 | i=1..n; j=1..m};
+let B = dmatrix {i==1 | i=1..n; j=1..m};
+let C = dmatrix {m*(i==1 && j==1) | i=1..n; j=1..n};
+
+assert_eq "matmul_nt2" (A*B^') C;
+assert_err "matmul_nt_exc2" (A*C^') dimensions_mismatch;
+
+assert_eq "mulsum_symm_nttn2" (A*B^' + (A*B^')^') (C + C^');
+
+let C = {1.0 | i=1..m; j=1..m};
+
+assert_eq "matmul_tn2" (B^'*A) C;
+assert_err "matmul_nt_exc2" (C^'*A) dimensions_mismatch;
+
+assert_eq "mulsum_symm_tnnt2" (A^'*B + (A^'*B)^') (C + C^');
