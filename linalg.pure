@@ -41,7 +41,6 @@ infix (::*) *;
 /* preprocessing of algebraic expressions */
 
 
-
 /* substitute multiplication chains with the private function __linalg::mul */
 #! --if optmul
 def (a ::* b) ::* c   |
@@ -98,7 +97,7 @@ def (mul l)::^* = mul $ iter_adj l
     end;
 #! --endif
 
-/* resolving multiplication chains first 
+/* resolving multiplication chains
 
 outer chains resolve completely into a matrix while inner chains
 resolve to a single multiplication denoted by __linalg::* in order to
@@ -108,24 +107,35 @@ the associativity property is used to reduce the number of flops.
 this optimization is performed locally, considering three terms 
 at a time, and is thus suboptimal.*/
 
-//mul (A::dmatrix,B::dmatrix,C::dmatrix,rest) = mul (D,C,rest)
+#! --if optmul
+mul (A::xmatrix,B::xmatrix,C::xmatrix,rest) = if dim B!0 < dim B!1 
+    then mul (D,C,rest) when D = A ::* B; end
+    else mul (A,D,rest) when D = B ::* C; end;
 
+mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 < dim B!1 
+    then D ::* C when D = A ::* B; end
+    else A ::* D when D = B ::* C; end;
 
-//mul (A::dmatrix,B::dmatrix,C::dmatrix) = D ::* C;
+in_mul (A::xmatrix,B::xmatrix,C::xmatrix,rest) = if dim B!0 < dim B!1 
+    then in_mul (D,C,rest) when D = A ::* B; end
+    else in_mul (A,D,rest) when D = B ::* C; end;
 
+in_mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 < dim B!1 
+    then D * C when D = A ::* B; end
+    else A * D when D = B ::* C; end;
 
+// if no rule is applicable just apply ::*
+mul (A,B,C,rest) = mul (D,C,rest) when D = A ::* B; end; 
+mul (A,B,C) = D ::* C when D = A ::* B; end;
+in_mul (A,B,C,rest) = mul (D,C,rest) when D = A ::* B; end; 
+in_mul (A,B,C) = D ::* C when D = A ::* B; end;
+#! --endif
 
-/*in_mul (a::var,b::var,c::var,rest) = in_mul (ab,c,rest);
-in_mul (a::var,b::var,c::var) = ab * c; */
-
-
-
-/* highest priority rules resolving a sum and a multiplication in 
-the form
+/* rules resolving a sum and a multiplication in the form
 
     C + A*B
 
-these take advantage of temporary matrices flagged by __linalg::tmp, 
+that take advantage of temporary matrices flagged by __linalg::tmp, 
 modifing them in place.*/
 
 #! --ifnot notmp
@@ -141,10 +151,8 @@ sum (tmp y::dmatrix,A::xmatrix * B::xmatrix,rest) = sum (tmp C,rest)
 #! --endif
 
 
-/* medium priority rules resolving a sum and a multiplication.
-
-these combine multiplication and addition without modifing existing matrices,
-the result is stored in a newly allocated matrix.*/
+/* rules resolving a sum and a multiplication without modifing existing 
+matrices. the result is stored in a newly allocated matrix.*/
 
 #! --ifnot notmp
 sum (C::dmatrix,A::xmatrix * B::xmatrix) = out
@@ -161,7 +169,7 @@ sum (C::dmatrix,A::xmatrix * B::xmatrix,rest) = sum (tmp out,rest)
 #! --endif
 
 
-/* least priority rules resolving a multiplication alone. */
+/* rule resolving a multiplication alone. */
 
 #! --ifnot notmp
 sum (A::xmatrix * B::xmatrix,rest) = sum (tmp out,rest)

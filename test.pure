@@ -24,7 +24,7 @@ assert_err "transpose_d_index_oob_low2" (A^'!(0,-1)) out_of_bounds;
 assert_err "transpose_d_index_oob_high1" (A^'!(2,0)) out_of_bounds;
 assert_err "transpose_d_index_oob_high2" (A^'!(0,3)) out_of_bounds;
 
-/* multiplication */
+/* single multiplication */
 
 let n = 3;
 let m = 2;
@@ -96,3 +96,22 @@ assert_eq "matmul_tn2" (B^'*A) C;
 assert_err "matmul_nt_exc2" (C^'*A) dimensions_mismatch;
 
 assert_eq "mulsum_symm_tnnt2" (A^'*B + (A^'*B)^') (C + C^');
+
+/* multiplication chain */
+
+let n = 3;
+let m = 2;
+
+let A = dmatrix {i==1 | i=1..n; j=1..m};
+let B = transpose A;
+let C = dmatrix {i==j | i=1..n; j=1..(m+2)};
+let D = dmatrix { m*(i==1)*(j==1) | i=1..n; j=1..(m+2)};
+
+assert_eq "mulchain1" (A*B*C) D;
+assert_err "mulchain_exc1" (A*C*B) dimensions_mismatch;
+assert_err "mulchain_exc2" (B*C^'*A) dimensions_mismatch;
+
+let C = dmatrix {i==j | i=1..m; j=1..(n+2)};
+let D = dmatrix { j<=m | i=1..m; j=1..(n+2)};
+
+assert_eq "mulchain2" (B*A*C) D;
