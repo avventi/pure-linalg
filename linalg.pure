@@ -108,19 +108,19 @@ this optimization is performed locally, considering three terms
 at a time, and is thus suboptimal.*/
 
 #! --if optmul
-mul (A::xmatrix,B::xmatrix,C::xmatrix,rest) = if dim B!0 < dim B!1 
+mul (A::xmatrix,B::xmatrix,C::xmatrix,rest) = if dim B!0 > dim B!1 
     then mul (D,C,rest) when D = A ::* B; end
     else mul (A,D,rest) when D = B ::* C; end;
 
-mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 < dim B!1 
+mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 > dim B!1 
     then D ::* C when D = A ::* B; end
     else A ::* D when D = B ::* C; end;
 
-in_mul (A::xmatrix,B::xmatrix,C::xmatrix,rest) = if dim B!0 < dim B!1 
+in_mul (A::xmatrix,B::xmatrix,C::xmatrix,rest) = if dim B!0 > dim B!1 
     then in_mul (D,C,rest) when D = A ::* B; end
     else in_mul (A,D,rest) when D = B ::* C; end;
 
-in_mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 < dim B!1 
+in_mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 > dim B!1 
     then D * C when D = A ::* B; end
     else A * D when D = B ::* C; end;
 
