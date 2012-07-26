@@ -127,7 +127,7 @@ in_mul (A::xmatrix,B::xmatrix,C::xmatrix) = if dim B!0 < dim B!1
 // if no rule is applicable just apply ::*
 mul (A,B,C,rest) = mul (D,C,rest) when D = A ::* B; end; 
 mul (A,B,C) = D ::* C when D = A ::* B; end;
-in_mul (A,B,C,rest) = mul (D,C,rest) when D = A ::* B; end; 
+in_mul (A,B,C,rest) = in_mul (D,C,rest) when D = A ::* B; end; 
 in_mul (A,B,C) = D ::* C when D = A ::* B; end;
 #! --endif
 
