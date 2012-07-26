@@ -85,16 +85,18 @@ def sum (a ::+ b,rest) = sum(a,b,rest);
 
 /* transpose/adjoint optimizations */
 
-def (A ::* B)^' = B^' ::* A^';
-def (A ::* B)^* = B^* ::* A^*;
-def (mul l)^' = mul $ iter_trans l 
+#! --if adjopt
+def (A ::* B)::^' = B ::^' ::* A ::^';
+def (A ::* B)::^* = B ::^* ::* A ::^*;
+def (mul l)::^' = mul $ iter_trans l 
     with
-        iter_trans (A,rest) = (iter_trans rest, A^');
+        iter_trans (A,rest) = (iter_trans rest, A ::^');
     end;
-def (mul l)^* = mul $ iter_adj l 
+def (mul l)::^* = mul $ iter_adj l 
     with
-        iter_adj (A,rest) = (iter_adj rest, A^*);
+        iter_adj (A,rest) = (iter_adj rest, A ::^*);
     end;
+#! --endif
 
 /* resolving multiplication chains first 
 
