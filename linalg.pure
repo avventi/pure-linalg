@@ -141,12 +141,12 @@ modifing them in place.*/
 #! --ifnot notmp
 sum (tmp C::dmatrix,A::xmatrix * B::xmatrix) = C
     when
-        _ = inplace_mulsum A B C;
+        _ = inplace_mulsum 1.0 A B C;
     end;
 
 sum (tmp y::dmatrix,A::xmatrix * B::xmatrix,rest) = sum (tmp C,rest)
     when
-        _ = inplace_mulsum A B C;
+        _ = inplace_mulsum 1.0 A B C;
     end;   
 #! --endif
 
@@ -158,13 +158,13 @@ matrices. the result is stored in a newly allocated matrix.*/
 sum (C::dmatrix,A::xmatrix * B::xmatrix) = out
     when
         out = pack C;
-        _ = inplace_mulsum A B out;
+        _ = inplace_mulsum 1.0 A B out;
     end;
 
 sum (C::dmatrix,A::xmatrix * B::xmatrix,rest) = sum (tmp out,rest)
     when
         out = pack C;
-        _ = inplace_mulsum A B out;
+        _ = inplace_mulsum 1.0 A B out;
     end;
 #! --endif
 
@@ -175,7 +175,7 @@ sum (C::dmatrix,A::xmatrix * B::xmatrix,rest) = sum (tmp out,rest)
 sum (A::xmatrix * B::xmatrix,rest) = sum (tmp out,rest)
     when
         out = double_matrix (dim A!0,dim B!1) NULL;
-        _ = inplace_mulsum A B out;
+        _ = inplace_mulsum 1.0 A B out;
     end;
 #! --endif
 

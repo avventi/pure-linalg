@@ -163,84 +163,84 @@ namespace;
 
 /* matrix-vector inplace multiplication and summation
 
-    M*x + y -> y
+    alpha*M*x + y -> y
 
-where M is an xmatrix
+where M is an xmatrix and alpha is a scalar.
 */
 
-inplace_mulsum A::dmatrix x::dmatrix y::dmatrix = ()
+inplace_mulsum alpha::double A::dmatrix x::dmatrix y::dmatrix = ()
     when
         mA, nA = dim A;
-        _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA alpha A nA x 1 1.0 y 1;
     end
     if dim x!1 == 1 && dim A!1 == dim x!0 && dim y!1 == 1 && dim y!0 == dim A!0;
 
-inplace_mulsum (A::dmatrix^') x::dmatrix y::dmatrix = ()
+inplace_mulsum alpha::double (A::dmatrix^') x::dmatrix y::dmatrix = ()
     when
         mA, nA = dim A;
-        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA alpha A nA x 1 1.0 y 1;
     end 
     if dim x!1 == 1 && dim A!0 == dim x!0 && dim y!1 == 1 && dim y!0 == dim A!1;
 
 
 /* vector-matrix inplace multiplication and summation
 
-    x*M + y -> y
+    alpha*x*M + y -> y
 
-where M is an xmatrix
+where M is an xmatrix and alpha is a skalar.
 */
 
-inplace_mulsum x::dmatrix A::dmatrix y::dmatrix = ()
+inplace_mulsum alpha::double x::dmatrix A::dmatrix y::dmatrix = ()
     when
         mA, nA = dim A;
-        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasTrans mA nA alpha A nA x 1 1.0 y 1;
     end
     if dim x!0 == 1 && dim A!0 == dim x!1 && dim y!0 == 1 && dim y!1 == dim A!1;
 
-inplace_mulsum x::dmatrix (A::dmatrix^') y::dmatrix = ()
+inplace_mulsum alpha::double x::dmatrix (A::dmatrix^') y::dmatrix = ()
     when
         mA, nA = dim A;
-        _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA 1.0 A nA x 1 1.0 y 1;
+        _ = cblas_dgemv CblasRowMajor CblasNoTrans mA nA alpha A nA x 1 1.0 y 1;
     end
     if dim x!0 == 1 && dim A!1 == dim x!1 && dim y!0 == 1 && dim y!1 == dim A!0;
 
 
 /* matrix-matrix inplace multiplication and summation
 
-    H*F + C -> C
+    alpha*H*F + C -> C
 
-where H and F are xmatrix
+where H and F are xmatrix and alpha is a scalar.
 */
 
-inplace_mulsum A::dmatrix B::dmatrix C::dmatrix = ()
+inplace_mulsum alpha::double A::dmatrix B::dmatrix C::dmatrix = ()
     when
         mA, nA = dim A;
         mB, nB = dim B;
-        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans mA nB nA 1.0 A nA B nB 1.0 C nB;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasNoTrans mA nB nA alpha A nA B nB 1.0 C nB;
     end
     if dim A!1 == dim B!0 && dim A!0 == dim C!0 && dim B!1 == dim C!1;
 
-inplace_mulsum (A::dmatrix^') B::dmatrix C::dmatrix = ()
+inplace_mulsum alpha::double (A::dmatrix^') B::dmatrix C::dmatrix = ()
     when
         mA, nA = dim A;
         mB, nB = dim B;
-        _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans nA nB mA 1.0 A nA B nB 1.0 C nB;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasNoTrans nA nB mA alpha A nA B nB 1.0 C nB;
     end 
     if dim A!0 == dim B!0 && dim A!1 == dim C!0 && dim B!1 == dim C!1;
 
-inplace_mulsum A::dmatrix (B::dmatrix^') C::dmatrix = ()
+inplace_mulsum alpha::double A::dmatrix (B::dmatrix^') C::dmatrix = ()
     when
         mA, nA = dim A;
         mB, nB = dim B;
-        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans mA mB nA 1.0 A nA B nB 1.0 C mB;
+        _ = cblas_dgemm CblasRowMajor CblasNoTrans CblasTrans mA mB nA alpha A nA B nB 1.0 C mB;
     end
     if dim A!1 == dim B!1 && dim A!0 == dim C!0 && dim B!0 == dim C!1;
 
-inplace_mulsum (A::dmatrix^') (B::dmatrix^') C::dmatrix = ()
+inplace_mulsum alpha::double (A::dmatrix^') (B::dmatrix^') C::dmatrix = ()
     when
         mA, nA = dim A;
         mB, nB = dim B;
-        _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans nA mB mA 1.0 A nA B nB 1.0 C mB;
+        _ = cblas_dgemm CblasRowMajor CblasTrans CblasTrans nA mB mA alpha A nA B nB 1.0 C mB;
     end
     if dim A!0 == dim B!1 && dim A!1 == dim C!0 && dim B!0 == dim C!1;
 
@@ -249,30 +249,31 @@ inplace_mulsum (A::dmatrix^') (B::dmatrix^') C::dmatrix = ()
 
 //inplace_mulsum (eye n::int) (eye n::int) C::dmatrix =
 
-inplace_mulsum A::dmatrix (eye n::int) C::dmatrix = ()
-    when 
-        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+inplace_mulsum alpha::double A::dmatrix (eye n::int) C::dmatrix = ()
+    when
+        _ = cblas_daxpy (#A) alpha A 1 C 1;
     end
     if dim A == dim C && dim A!1 == n; 
 
-inplace_mulsum (eye n::int) A::dmatrix C::dmatrix = ()
+inplace_mulsum alpha::double (eye n::int) A::dmatrix C::dmatrix = ()
     when 
-        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+        _ = cblas_daxpy (#A) alpha A 1 C 1;
     end
     if dim A == dim C && dim A!0 == n;
 
 #! --if notmp
-inplace_mulsum (A::dmatrix^') (eye n::int) C::dmatrix = ()
+inplace_mulsum alpha::double (A::dmatrix^') (eye n::int) C::dmatrix = ()
     when 
         At = transpose A;
-        _ = cblas_daxpy (#At) 1.0 At 1 C 1;
+        bC = scale beta C;
+        _ = cblas_daxpy (#At) alpha At 1 C 1;
     end
     if dim (A^') == dim C && dim A!0 == n; 
 
-inplace_mulsum (eye n::int) (A::dmatrix^') C::dmatrix = ()
+inplace_mulsum alpha::double (eye n::int) (A::dmatrix^') C::dmatrix = ()
     when 
         At = transpose A;
-        _ = cblas_daxpy (#At) 1.0 At 1 C 1;
+        _ = cblas_daxpy (#At) alpha At 1 C 1;
     end
     if dim (A^') == dim C && dim A!1 == n;
 #! --else
@@ -280,7 +281,7 @@ inplace_mulsum (eye n::int) (A::dmatrix^') C::dmatrix = ()
 #! --endif
 
 // catch all error
-inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
+inplace_mulsum alpha A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 
 
 /* matrix multiplication */
@@ -288,7 +289,7 @@ inplace_mulsum A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 A::xmatrix ::* B::xmatrix = C
     when
         C = double_matrix (dim A!0,dim B!1) NULL;
-        _ = inplace_mulsum A B C; 
+        _ = inplace_mulsum 1.0 A B C; 
     end
     if dim A!1 == dim B!0;
 
