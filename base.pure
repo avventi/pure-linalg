@@ -104,21 +104,24 @@ dim (subeye n m k) = (n,m);
 // packing (will force the evaluation)
 pack (subeye n m k) = {double (i==j-k)|i=1..n; j=1..m};
 
-/* definition of extended and  matrices type */
+/* definition of extended and lazy matrix types. 
 
-xmatrixp A::dmatrix = true;
+extended matrices are the union of numerical matrices and 
+lazy matrices */
+
 lmatrixp A::dmatrix = false;
 
-xmatrixp (A::dmatrix^') |
+lmatrixp (A::dmatrix^*) |
 lmatrixp (A::dmatrix^') = true;
 
-xmatrixp (eye n::int) |
 lmatrixp (eye n::int) = true;
 
-type xmatrix = xmatrixp;
 type lmatrix = lmatrixp;
 
+xmatrixp A::lmatrix = true;
+xmatrixp A::dmatrix = true;
 
+type xmatrix = xmatrixp;
 
 /**********************************************************
 ****                  blas wrappers                    ****
