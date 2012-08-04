@@ -104,13 +104,19 @@ dim (subeye n m k) = (n,m);
 // packing (will force the evaluation)
 pack (subeye n m k) = {double (i==j-k)|i=1..n; j=1..m};
 
-/* definition of extended matrices type */
+/* definition of extended and  matrices type */
 
 xmatrixp A::dmatrix = true;
-xmatrixp (A::dmatrix^') = true;
-xmatrixp (eye n::int) = true;
+lmatrixp A::dmatrix = false;
+
+xmatrixp (A::dmatrix^') |
+lmatrixp (A::dmatrix^') = true;
+
+xmatrixp (eye n::int) |
+lmatrixp (eye n::int) = true;
 
 type xmatrix = xmatrixp;
+type lmatrix = lmatrixp;
 
 
 
@@ -245,79 +251,40 @@ inplace_mulsum alpha::double (A::dmatrix^') (B::dmatrix^') C::dmatrix = ()
     if dim A!0 == dim B!1 && dim A!1 == dim C!0 && dim B!0 == dim C!1;
 
 
-/* multiplication with identity */
+/* multiplication with identity resolves into a inplace summation */
 
-//inplace_mulsum (eye n::int) (eye n::int) C::dmatrix =
+inplace_mulsum alpha::double A::xmatrix (eye n::int) C::dmatrix = inplace_sum alpha A C
+    if dim A!1 == n; 
 
-inplace_mulsum alpha::double A::dmatrix (eye n::int) C::dmatrix = ()
-    when
-        _ = cblas_daxpy (#A) alpha A 1 C 1;
-    end
-    if dim A == dim C && dim A!1 == n; 
-
-inplace_mulsum alpha::double (eye n::int) A::dmatrix C::dmatrix = ()
-    when 
-        _ = cblas_daxpy (#A) alpha A 1 C 1;
-    end
-    if dim A == dim C && dim A!0 == n;
-
-#! --if notmp
-inplace_mulsum alpha::double (A::dmatrix^') (eye n::int) C::dmatrix = ()
-    when 
-        At = transpose A;
-        bC = scale beta C;
-        _ = cblas_daxpy (#At) alpha At 1 C 1;
-    end
-    if dim (A^') == dim C && dim A!0 == n; 
-
-inplace_mulsum alpha::double (eye n::int) (A::dmatrix^') C::dmatrix = ()
-    when 
-        At = transpose A;
-        _ = cblas_daxpy (#At) alpha At 1 C 1;
-    end
-    if dim (A^') == dim C && dim A!1 == n;
-#! --else
-// versions without temporary
-#! --endif
+inplace_mulsum alpha::double (eye n::int) A::xmatrix C::dmatrix = inplace_sum alpha A C
+    if dim A!0 == n;
 
 // catch all error
 inplace_mulsum alpha A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 
 
-/* matrix multiplication */
- 
-A::xmatrix ::* B::xmatrix = C
+/* inplace summation */
+
+inplace_sum alpha::double A::dmatrix B::dmatrix = ()
     when
-        C = double_matrix (dim A!0,dim B!1) NULL;
-        _ = inplace_mulsum 1.0 A B C; 
-    end
-    if dim A!1 == dim B!0;
-
-A::xmatrix ::* B::xmatrix = throw dimensions_mismatch;
-
-
-/* matrix summation */
-
-A::dmatrix ::+ B::dmatrix = C
-    when
-        C = pack B;
-        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
+        _ = cblas_daxpy (#A) alpha A 1 B 1;
     end
     if dim A == dim B;
-A::dmatrix^' ::+ B::dmatrix^' = (C)^' 
-    when
-        C = pack B;
-        _ = cblas_daxpy (#A) 1.0 A 1 C 1;
-    end
-    if dim A == dim B;
-A::dmatrix^' ::+ B::dmatrix   |
-B::dmatrix   ::+ A::dmatrix^' = C
+
+// maybe a version without temporary is needed
+inplace_sum alpha::double (A::dmatrix^') B::dmatrix = ()
     when
         C = transpose A;
-        _ = cblas_daxpy (#B) 1.0 B 1 C 1;
+        _ = cblas_daxpy (#B) alpha C 1 B 1;
     end
     if dim (A^') == dim B;
 
+inplace_sum alpha::double (eye n::int) B::dmatrix = ()
+    when 
+        C = {1.0| i=1..n};
+        _ = cblas_daxpy (#C) alpha C 1 B (n+1);
+    end
+    if dim B == (n,n);
     
 // catch all error
-A::xmatrix ::+ B::xmatrix = throw dimensions_mismatch;
+inplace_sum alpha A::xmatrix B::dmatrix = throw dimensions_mismatch;

@@ -87,6 +87,7 @@ def sum (a ::+ b,rest) = sum(a,b,rest);
 #! --if adjopt
 def (A ::* B)::^' = B ::^' ::* A ::^';
 def (A ::* B)::^* = B ::^* ::* A ::^*;
+
 def (mul l)::^' = mul $ iter_trans l 
     with
         iter_trans (A,rest) = (iter_trans rest, A ::^');
@@ -95,6 +96,9 @@ def (mul l)::^* = mul $ iter_adj l
     with
         iter_adj (A,rest) = (iter_adj rest, A ::^*);
     end;
+
+def A^' ::+ B^' = (A ::+ B)^';
+def A^* ::+ B^* = (A ::+ B)^*;
 #! --endif
 
 /* resolving multiplication chains
@@ -178,5 +182,32 @@ sum (A::xmatrix * B::xmatrix,rest) = sum (tmp out,rest)
         _ = inplace_mulsum 1.0 A B out;
     end;
 #! --endif
+
+/* matrix multiplication */
+ 
+A::xmatrix ::* B::xmatrix = C
+    when
+        C = double_matrix (dim A!0,dim B!1) NULL;
+        _ = inplace_mulsum 1.0 A B C; 
+    end
+    if dim A!1 == dim B!0;
+
+A::xmatrix ::* B::xmatrix = throw dimensions_mismatch;
+
+/* matrix summation */
+
+A::lmatrix ::+ B::xmatrix |
+B::xmatrix ::+ A::lmatrix |
+A::xmatrix ::+ B::xmatrix = C
+    when
+        C = pack A;
+        _ = inplace_sum 1.0 B C;
+    end
+    if dim A == dim B;
+
+
+    
+// catch all error
+A::xmatrix ::+ B::xmatrix = throw dimensions_mismatch;
 
 namespace;

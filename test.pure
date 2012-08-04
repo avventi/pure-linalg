@@ -96,6 +96,14 @@ assert_err "matmul_nt_exc2" (C^'*A) dimensions_mismatch;
 
 assert_eq "mulsum_symm_tnnt2" (A^'*B + (A^'*B)^') (C + C^');
 
+/* identity */
+let n = 3;
+
+let A = double_matrix (n,n) NULL;
+
+assert_eq "eyesum" ((eye n) + A) (pack (eye n));
+assert_eq "eyemul_self" ((eye n)*(eye n)) (pack (eye n));
+
 /* multiplication chain */
 
 let n = 3;
