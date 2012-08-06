@@ -81,28 +81,31 @@ pack (eye n) = {double (i==j)|i=1..n; j=1..n};
 
 /* sub-identity matrix 
 
-subeye n m k represent a n by m matrix whose 
+subeye (n,m) k represent a n by m matrix whose 
 k-th subdiagonal is composed by ones.
 */
 
-dim (subeye n m k) = (n,m);
+subeye n::int k = subeye (n,n) k; 
+
+dim (subeye (n,m) k) = (n,m);
 
 // indexing
-(subeye n m j)!(k,l) = throw out_of_bounds if k<0 || k>=n || l<0 || l>=m;
-(subeye n m j)!(k,l) = double (k==l-j);
+(subeye (n,m) j)!(k,l) = throw out_of_bounds if k<0 || k>=n || l<0 || l>=m;
+(subeye (n,m) j)!(k,l) = double (k==l-j);
 
-(subeye n m j)!k = throw out_of_bounds if k<0 || k>=n*m;
-(subeye n m j)!k = double (k div n == (l mod n)-j);
+(subeye (n,m) j)!k = throw out_of_bounds if k<0 || k>=n*m;
+(subeye (n,m) j)!k = double (k div n == (l mod n)-j);
 
 // slicing (will force the evaluation)
-(subeye n m k)!!(ks,ls) = {double (i==j-k)|i=ks; j=ls};
+(subeye (n,m) k)!!(ks,ls) = {double (i==j-k)|i=ks; j=ls};
 
 // transpose
-(subeye n m k)^' |
-(subeye n m k)^* = subeye m n (-k);
+(subeye (n,m) k)^' |
+(subeye (n,m) k)^* = subeye m n (-k);
 
 // packing (will force the evaluation)
-pack (subeye n m k) = {double (i==j-k)|i=1..n; j=1..m};
+pack (subeye (n,m) k) = {double (i==j-k)|i=1..n; j=1..m};
+
 
 /* definition of extended and lazy matrix types. 
 
@@ -284,7 +287,8 @@ inplace_sum alpha::double (A::dmatrix^') B::dmatrix = ()
 
 inplace_sum alpha::double (eye n::int) B::dmatrix = ()
     when 
-        C = {1.0| i=1..n};
+        // really need to have a better way to create constant matrices
+        C = {1.0| i=1..n}; 
         _ = cblas_daxpy (#C) alpha C 1 B (n+1);
     end
     if dim B == (n,n);
