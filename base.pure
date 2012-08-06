@@ -101,7 +101,7 @@ dim (subeye (n,m) k) = (n,m);
 
 // transpose
 (subeye (n,m) k)^' |
-(subeye (n,m) k)^* = subeye m n (-k);
+(subeye (n,m) k)^* = subeye (m,n) (-k);
 
 // packing (will force the evaluation)
 pack (subeye (n,m) k) = {double (i==j-k)|i=1..n; j=1..m};
