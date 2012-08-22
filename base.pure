@@ -58,6 +58,7 @@ A::imatrix^* = A^'; // integer matrices are not supported by blas
 pack (A::matrix^') = transpose A;
 pack (A::matrix^*) = transpose $ conj A; // FIX ME: this needs to be done in one go
 
+
 /* identity matrix */
 
 dim (eye n::int) = (n,n);
@@ -78,6 +79,7 @@ dim (eye n::int) = (n,n);
 
 // packing (will force the evaluation)
 pack (eye n) = {double (i==j)|i=1..n; j=1..n};
+
 
 /* sub-identity matrix 
 
@@ -107,6 +109,61 @@ dim (subeye (n,m) k) = (n,m);
 pack (subeye (n,m) k) = {double (i==j-k)|i=1..n; j=1..m};
 
 
+/* constant matrix
+
+cstmat (n,m) alpha represent a n by m matrix
+whose elements are all equat to alpha.
+*/
+
+// shortcut for a matrix of ones
+ones _dim = cstmat _dim 1.0;
+
+cstmat n::int alpha = cstmat (n,n) alpha;
+
+dim (cstmat (n,m) k) = (n,m);
+
+// indexing
+(cstmat (n,m) alpha)!(k,l) = throw out_of_bounds if k<0 || k>=n || l<0 || l>=m;
+(cstmat (n,m) alpha)!(k,l) = alpha;
+
+(cstmat (n,m) alpha)!k = throw out_of_bounds if k<0 || k>=n*m;
+(cstmat (n,m) alpha)!k = alpha;
+
+// slicing (will force the evaluation)
+(cstmat (n,m) alpha::double)!!(ks,ls) = {alpha|i=1..#ks; j=1..#ls};
+
+// transpose
+(cstmat (n,m) alpha)^' = cstmat (m,n) alpha;
+(cstmat (n,m) alpha)^* = cstmat (m,n) conj k;
+
+// packing (will force the evaluation)
+pack (cstmat (n,m) alpha::double) = {alpha|i=1..n; j=1..m};
+
+
+/* zero matrix */
+
+/*zeros n::int = zeros (n,n);
+
+dim (zeros (n,m)) = (n,m);
+
+// indexing
+(zeros (n,m))!(k,l) = throw out_of_bounds if k<0 || k>=n || l<0 || l>=m;
+(zeros (n,m))!(k,l) = 0.0;
+
+(zeros (n,m))!k = throw out_of_bounds if k<0 || k>=n*m;
+(zeros (n,m))!k = 0.0;
+
+// slicing (will force the evaluation)
+(zeros (n,m))!!(ks,ls) = dmatrix (#ks,#ls);
+
+// transpose
+(zeros (n,m))^' |
+(zeros (n,m))^* = zeros (m,n);
+
+// packing (will force the evaluation)
+pack (zeros (n,m)) = dmatrix (n,m);*/
+
+
 /* definition of extended and lazy matrix types. 
 
 extended matrices are the union of numerical matrices and 
@@ -118,6 +175,10 @@ lmatrixp (A::dmatrix^*) |
 lmatrixp (A::dmatrix^') = true;
 
 lmatrixp (eye n::int) = true;
+
+lmatrixp (cstmat (n::int,m::int) alpha::double) = true;
+
+/*lmatrixp (zeros (n::int,m::int)) = true;*/
 
 type lmatrix = lmatrixp;
 
@@ -169,8 +230,13 @@ namespace;
 
 
 /**********************************************************
-****           basic function definitions              ****
+****          inplace function definitions             ****
 **********************************************************/
+
+/* vector-vector inplace multiplication and summation
+
+TODO
+*/
 
 
 /* matrix-vector inplace multiplication and summation
@@ -265,6 +331,7 @@ inplace_mulsum alpha::double A::xmatrix (eye n::int) C::dmatrix = inplace_sum al
 inplace_mulsum alpha::double (eye n::int) A::xmatrix C::dmatrix = inplace_sum alpha A C
     if dim A!0 == n;
 
+
 // catch all error
 inplace_mulsum alpha A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 
@@ -292,6 +359,14 @@ inplace_sum alpha::double (eye n::int) B::dmatrix = ()
         _ = cblas_daxpy (#C) alpha C 1 B (n+1);
     end
     if dim B == (n,n);
-    
+
+// last resort, just pack the lmatrix
+inplace_sum alpha::double A::lmatrix B::dmatrix = ()
+    when 
+         C = pack A; 
+        _ = cblas_daxpy (#B) alpha C 1 B 1;
+    end
+    if dim A == dim B;
+
 // catch all error
 inplace_sum alpha A::xmatrix B::dmatrix = throw dimensions_mismatch;
