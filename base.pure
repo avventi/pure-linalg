@@ -332,6 +332,58 @@ inplace_mulsum alpha::double (eye n::int) A::xmatrix C::dmatrix = inplace_sum al
     if dim A!0 == n;
 
 
+/* multiplication with a constant matrix */
+
+// matrix-vector
+
+inplace_mulsum alpha::double A::xmatrix (cstmat (n,m) beta) C::dmatrix = 
+    inplace_mulsum alpha A B C
+    when
+        B = pack (cstmat (n,m) beta);
+    end
+    if dim A!1 == n && m == 1 && dim C!0 == dim A!0 && dim C!1 == 1; 
+
+inplace_mulsum alpha::double (cstmat (n,m) beta) A::xmatrix C::dmatrix = 
+    inplace_sum alpha B A C
+    when
+        B = pack (cstmat (n,m) beta);
+    end
+    if dim A!0 == m && n == 1 && dim C!0 == 1 && dim C!1 == dim A!1;
+
+/* matrix-matrix, resolve using the following
+
+alpha*cstmat (n,m) b = (cstmat (n,1) alpha) * (cstmat (1.m) b) 
+*/
+
+/*inplace_mulsum alpha::double A::xmatrix (cstmat (n::int,m::int) b::double) C::dmatrix = 
+    inplace_mulsum 1.0 AB D C
+    when
+        B = pack (cstmat (n,1) alpha);
+        AB = dmatrix (dim A!0,1);
+        _ = inplace_mulsum 1.0 A B AB;
+        D = pack (cstmat (1,m) b);
+    end
+    if dim A!1 == n && dim C!0 == dim A!0 && dim C!1 == m; 
+
+inplace_mulsum alpha::double (cstmat (n::int,m::int) b::double) A::xmatrix C::dmatrix = 
+    inplace_sum 1.0 D BA C
+    when
+        B = pack (cstmat (1,m) alpha);
+        BA = dmatrix (1,dim A!1);
+        _ = inplace_mulsum 1.0 B A BA;
+        D = pack (cstmat (n,1) b);
+    end
+    if dim A!0 == m && dim C!0 == n && dim C!1 == dim A!1;*/
+
+
+/* multiplication with zero matrix */
+
+/*inplace_mulsum alpha::double (zeros (n::int,m::int)) A::xmatrix C::dmatrix = ()
+    if dim A!0 == m && dim C!0 == n && dim C!1 == dim A!1;
+
+inplace_mulsum alpha::double A::xmatrix (zeros (n::int,m::int)) C::dmatrix = ()
+    if dim A!1 == n && dim C!0 == dim A!0 && dim C!1 == m;*/
+
 // catch all error
 inplace_mulsum alpha A::xmatrix B::xmatrix C::dmatrix = throw dimensions_mismatch;
 

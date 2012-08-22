@@ -107,6 +107,23 @@ assert_err "eyesum_exc" ((eye (n+1)) + A) dimensions_mismatch;
 assert_eq "eyemul_self" ((eye n)*(eye n)) (pack (eye n));
 assert_err "eyemul_self_exc" ((eye (n+1))*(eye n)) dimensions_mismatch;
 
+/* constant matrix */
+let n = 3;
+let m = 1;
+
+let B = cstmat (n,m) 1.0;
+let A = pack (eye n);
+let C = pack B;
+
+assert_eq "cstmat_mul" (A*B) C;
+assert_err " cstmat_mul_exc" (B*A) dimensions_mismatch;
+
+let B = cstmat (m,n) 1.0;
+let C = pack B;
+
+assert_eq "cstmat_mul2" (B*A) C;
+assert_err " cstmat_mul_exc2" (A*B) dimensions_mismatch;
+
 /* multiplication chain */
 
 let n = 3;
